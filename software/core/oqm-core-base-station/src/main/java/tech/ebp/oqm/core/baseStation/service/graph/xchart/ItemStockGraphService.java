@@ -15,6 +15,7 @@ import tech.ebp.oqm.core.baseStation.service.graph.TransactionMapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -50,6 +51,7 @@ public class ItemStockGraphService extends GraphProvider {
             }
 
             if(!xData.isEmpty() && !yData.isEmpty()) {
+                this.addLastPointToGraph(xData, yData);
                 XYSeries series = chart.addSeries("Item: " + itemNameTransactionIterator.name(), xData, yData);
                 //TODO: add logic to hash name to get color of the line and cache it if needer (awt colors)
                 series.setMarker(SeriesMarkers.CIRCLE);
@@ -60,6 +62,11 @@ public class ItemStockGraphService extends GraphProvider {
         }
 
         return chart;
+    }
+
+    private void addLastPointToGraph(List<Date> xData, List<Double> yData) {
+        xData.addFirst(Date.from(Instant.now()));
+        yData.addFirst(yData.getFirst());
     }
 
     private byte[] toByteArray(XYChart chart) throws IOException {
