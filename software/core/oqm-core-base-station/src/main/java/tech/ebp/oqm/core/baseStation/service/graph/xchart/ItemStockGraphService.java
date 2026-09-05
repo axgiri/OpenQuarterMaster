@@ -15,7 +15,6 @@ import tech.ebp.oqm.core.baseStation.service.graph.TransactionMapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -40,17 +39,11 @@ public class ItemStockGraphService extends GraphProvider {
 
         List<Date> xData = new ArrayList<>();
         List<Double> yData = new ArrayList<>();
-        boolean isFirst = true;
 
         for (ItemNameTransactionIterator itemNameTransactionIterator : transactionsIterator) {
             while (itemNameTransactionIterator.iterator().hasNext()) {
                 ObjectNode page = itemNameTransactionIterator.iterator().next();
                 for (TransactionGraphValue transaction : TransactionMapper.mapTransactionsToArray(page)) {
-                    if (isFirst) {
-                        xData.add(Date.from(Instant.now()));
-                        yData.add(transaction.value());
-                        isFirst = false;
-                    }
                     xData.add(Date.from(transaction.timestamp()));
                     yData.add(transaction.value());
                 }
@@ -64,7 +57,6 @@ public class ItemStockGraphService extends GraphProvider {
 
             xData.clear();
             yData.clear();
-            isFirst = true;
         }
 
         return chart;
