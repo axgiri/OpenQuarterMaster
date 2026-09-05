@@ -40,18 +40,23 @@ public class ItemStockGraphService extends GraphProvider {
 
         List<Date> xData = new ArrayList<>();
         List<Double> yData = new ArrayList<>();
+        boolean isFirst = true;
 
         for (ItemNameTransactionIterator itemNameTransactionIterator : transactionsIterator) {
             while (itemNameTransactionIterator.iterator().hasNext()) {
                 ObjectNode page = itemNameTransactionIterator.iterator().next();
                 for (TransactionGraphValue transaction : TransactionMapper.mapTransactionsToArray(page)) {
+                    if (isFirst) {
+                        xData.add(Date.from(Instant.now()));
+                        yData.add(transaction.value());
+                        isFirst = false;
+                    }
                     xData.add(Date.from(transaction.timestamp()));
                     yData.add(transaction.value());
                 }
             }
 
             if(!xData.isEmpty() && !yData.isEmpty()) {
-                this.addLastPointToGraph(xData, yData);
                 XYSeries series = chart.addSeries("Item: " + itemNameTransactionIterator.name(), xData, yData);
                 //TODO: add logic to hash name to get color of the line and cache it if needer (awt colors)
                 series.setMarker(SeriesMarkers.CIRCLE);
@@ -59,14 +64,10 @@ public class ItemStockGraphService extends GraphProvider {
 
             xData.clear();
             yData.clear();
+            isFirst = true;
         }
 
         return chart;
-    }
-
-    private void addLastPointToGraph(List<Date> xData, List<Double> yData) {
-        xData.addFirst(Date.from(Instant.now()));
-        yData.addFirst(yData.getFirst());
     }
 
     private byte[] toByteArray(XYChart chart) throws IOException {
