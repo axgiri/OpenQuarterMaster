@@ -11,6 +11,7 @@ import {ItemAddEdit} from "./ItemAddEdit.js";
 import {UriUtils} from "../../UriUtils.js";
 import {Rest} from "../../Rest.js";
 import {ItemStoredTransaction} from "../itemStored/ItemStoredTransaction.js";
+import {ItemStoredSearch} from "../itemStored/ItemStoredSearch.js";
 import {MarkdownUtils} from "../../MarkdownUtils.js";
 import {Identifiers} from "../../Identifiers.js";
 import {CheckoutTypeUtils, StorageTypeUtils, StoredTypeUtils} from "../../StoredTypeUtils.js";
@@ -26,6 +27,8 @@ export class ItemView extends PageUtility {
 	static viewBsModal = new bootstrap.Modal($("#itemViewModal"), {});
 	static itemViewMessages = $("#itemViewMessages");
 	static itemViewModalLabel = $("#itemViewModalLabel");
+	static storageTab = $("#itemViewMainPaneStorageTab");
+	static statsTab = $("#itemViewMainPaneStatsTab");
 
 	static itemTransactionButtonContainer = $("#itemViewTransactButtonContainer");
 
@@ -92,7 +95,7 @@ export class ItemView extends PageUtility {
 	static viewAttsSection = $("#viewAttsSection");
 	static itemViewId = $("#itemViewId");
 	static itemViewEditButton = $('#itemViewEditButton');
-	static itemHistoryAccordionCollapse = $("#itemHistoryAccordionCollapse");
+	static itemHistoryAccordionCollapse = $("#itemViewMainPaneHistoryTabContent");
 	static itemViewCheckedOutResultsContainer = $("#itemViewCheckedOutResultsContainer");
 	static checkoutSearchForm = $("#itemViewCheckoutSearchForm");
 	static checkoutSearchResults = $("#itemViewCheckoutSearchResults");
@@ -110,7 +113,13 @@ export class ItemView extends PageUtility {
 
 	static allStoredSearchFormBlockInput = $("#itemViewAllStoredSearchForm-storageBlockInput");
 
+	static statsShown = false;
+	static statsTransactionsAmountGraphImg = $("#itemViewMainPaneStatsItemTransactionsAmountGraph");
+
 	static resetView() {
+		ItemView.statsTransactionsAmountGraphImg.attr("src", "");
+		ItemView.statsShown = false;
+		ItemView.storageTab.click();
 		ItemView.itemViewModalLabel.text("");
 		ItemView.itemTransactionButtonContainer.text("");
 		ItemView.storedMultiContainer.hide();
@@ -270,6 +279,11 @@ export class ItemView extends PageUtility {
 			output.find("#" + searchFormId + "-storageBlockInputName").val(blockLabel);
 		});
 
+		output.on("submit", function(e){
+			e.preventDefault();
+			ItemStoredSearch.search(output.find("#"+searchFormId)[0], e,"#"+searchResultsId,false, false);
+		});
+
 		return output;
 	}
 
@@ -279,7 +293,7 @@ export class ItemView extends PageUtility {
 
 		let dataRow = $('<div class="d-flex mb-5"></div>');
 		output.append(dataRow);
-		dataRow.append($('<div class="card"></div>').append($('<div class="card-body"></div>').append($('<h5 class="card-title d-inline">Num Stored:</h5>')).append($('<p class="card-text d-inline"></p>').text(itemData.stats.storageBlockStats[blockId].numStored))));
+		dataRow.append($('<div class="card"></div>').append($('<div class="card-body"></div>').append($('<p class="card-title d-inline h5">Num Stored:</p>')).append($('<p class="card-text d-inline"></p>').text(itemData.stats.storageBlockStats[blockId].numStored))));
 		dataRow.append(
 			$('<div class="card"></div>')
 				.append(
@@ -725,6 +739,11 @@ export class ItemView extends PageUtility {
 		ItemView.checkoutSearchFormItemClearButt.prop("disabled", true);
 		ItemView.checkoutSearchFormItemNameInput.prop("disabled", true);
 
+		ItemView.allStoredSearchForm.on("submit", function (e){
+			e.preventDefault();
+			ItemStoredSearch.search(ItemView.allStoredSearchForm[0], e,"#itemViewAllStoredSearchResults",false, true);
+		});
+
 		ItemView.checkoutSearchForm.on("submit", function (e) {
 			e.preventDefault();
 			let searchParams = new URLSearchParams(new FormData(e.target));
@@ -749,6 +768,25 @@ export class ItemView extends PageUtility {
 					ItemView.checkoutSearchResults.html(data);
 				}
 			});
+		});
+
+		ItemView.statsTab.on("click", function (){
+			if(ItemView.statsShown){
+				return;
+			}
+			console.log("Setting up item stats view.");
+
+			{
+				let params = new URLSearchParams();
+				params.append("itemId", ItemView.itemViewId.text());
+
+				ItemView.statsTransactionsAmountGraphImg.attr(
+					"src",
+					Rest.apiRoot + "/media/charts/graph/transactions?" + params.toString()
+				);
+			}
+
+			ItemView.statsShown = true;
 		});
 
 		$(document).ready(function () {

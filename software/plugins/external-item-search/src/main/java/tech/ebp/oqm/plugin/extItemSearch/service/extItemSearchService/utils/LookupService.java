@@ -3,6 +3,9 @@ package tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.utils;
 import tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.ItemSearchService;
 import tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.providers.barcodeLookup.BarcodeLookupService;
 import tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.providers.dataKick.DatakickService;
+import tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.providers.isbndb.ISBNdbLookupService;
+import tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.providers.openfoodfacts.OpenFoodFactsService;
+import tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.providers.openlibrary.OpenLibraryService;
 import tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.providers.rebrickable.RebrickableService;
 import tech.ebp.oqm.plugin.extItemSearch.service.extItemSearchService.providers.upcItemDb.UpcItemDbService;
 
@@ -30,12 +33,26 @@ public enum LookupService {
 		List.of(LookupSource.UPC_ITEM_DB),
 		List.of(LookupMethod.BARCODE)
 	),
-	;
-	
+    OPENFOODFACTS(
+        OpenFoodFactsService.class,
+        List.of(LookupSource.OPENFOODFACTS),
+        List.of(LookupMethod.BARCODE, LookupMethod.TEXT)
+    ),
+    OPENLIBRARY(
+        OpenLibraryService.class,
+        List.of(LookupSource.OPENLIBRARY),
+        List.of(LookupMethod.BARCODE, LookupMethod.TEXT)
+    ),
+    ISBNDB(
+        ISBNdbLookupService.class,
+        List.of(LookupSource.ISBNDB),
+        List.of(LookupMethod.BARCODE, LookupMethod.TEXT)
+    );
+
 	public final Class<? extends ItemSearchService> searchClass;
 	public final Collection<LookupSource> supportedSources;
 	public final Collection<LookupMethod> supportedMethods;
-	
+
 	LookupService(
 		Class<? extends ItemSearchService> searchClass,
 		Collection<LookupSource> supportedSources,
