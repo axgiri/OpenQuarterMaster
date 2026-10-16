@@ -14,25 +14,29 @@ import java.util.LinkedHashSet;
 
 @ApplicationScoped
 public class InventoryItemTestObjectCreator extends TestObjectCreator<InventoryItem> {
-	
+
 	private static int COUNTER = 0;
-	
-	@Override
-	public InventoryItem getTestObject() {
+
+	public static InventoryItem getNewInvItem(){
 		InventoryItem item = new InventoryItem()
-			.setName(faker.commerce().productName() + "-" + COUNTER++)
-			.setDescription(faker.lorem().sentence())
-			.setUnit(OqmProvidedUnits.UNIT)
+								 .setName(faker.commerce().productName() + "-" + COUNTER++)
+								 .setDescription(faker.lorem().sentence())
+								 .setUnit(OqmProvidedUnits.UNIT)
 								 .setDefaultPrices(new LinkedHashSet<>(){{
 									 add(
 										 StoredPricing.builder()
 											 .label("testPrice")
-											 .flatPrice(Monetary.getDefaultAmountFactory().setCurrency("USD").setNumber(1).create())
+											 .flatPrice(Monetary.getDefaultAmountFactory().setCurrency("USD").setNumber(1000).create())
 											 .build()
 									 );
 								 }})
-			.setStorageType(StorageType.BULK);
-		
+								 .setStorageType(StorageType.BULK);
+
 		return item;
+	}
+
+	@Override
+	public InventoryItem getTestObject() {
+		return getNewInvItem();
 	}
 }
