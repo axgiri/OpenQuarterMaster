@@ -2,7 +2,6 @@ package tech.ebp.oqm.plugin.alertMessenger.connections;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonDiscriminator;
@@ -15,9 +14,6 @@ import tech.ebp.oqm.plugin.alertMessenger.connections.encryption.EncryptedCreden
 @BsonDiscriminator(value = "DISCORD")
 @JsonTypeName("DISCORD")
 public class DiscordConnection extends ConnectionDetails implements EncryptedCredentials {
-
-    @Inject
-    EncryptionService encryptionService;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     //TODO: do not add this field to the response. and do not forget to handle `update` and `create`
@@ -35,14 +31,14 @@ public class DiscordConnection extends ConnectionDetails implements EncryptedCre
     }
 
     @Override
-    public void encryptCredentials() {
+    public void encryptCredentials(EncryptionService encryptionService) {
         if (webhookUrl != null && !webhookUrl.isBlank()) {
             webhookUrl = encryptionService.encrypt(webhookUrl);
         }
     }
 
     @Override
-    public void decryptCredentials() {
+    public void decryptCredentials(EncryptionService encryptionService) {
         if (webhookUrl != null && !webhookUrl.isBlank()) {
             webhookUrl = encryptionService.decrypt(webhookUrl);
         }

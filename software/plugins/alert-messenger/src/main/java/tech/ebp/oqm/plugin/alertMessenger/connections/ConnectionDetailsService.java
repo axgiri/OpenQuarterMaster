@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import tech.ebp.oqm.plugin.alertMessenger.connections.encryption.EncryptedCredentials;
+import tech.ebp.oqm.plugin.alertMessenger.connections.encryption.EncryptionService;
 
 import java.util.List;
 
@@ -14,6 +15,9 @@ public class ConnectionDetailsService {
 
     @Inject
     ConnectionDetailsRepository repository;
+
+    @Inject
+    EncryptionService encryptionService;
 
     public List<ConnectionDetails> getForUser(String userId, int pageIndex, int pageSize) {
         return repository.findAllPagedByUserId(userId, pageIndex, pageSize).list();
@@ -47,7 +51,7 @@ public class ConnectionDetailsService {
             if (incoming.getWebhookUrl() == null || incoming.getWebhookUrl().isBlank()) {
                 incoming.setWebhookUrl(stored.getWebhookUrl());
             } else {
-                incoming.encryptCredentials();
+                incoming.encryptCredentials(encryptionService);
             }
         }
         details.setUserId(existing.getUserId());
@@ -65,7 +69,7 @@ public class ConnectionDetailsService {
 
     private void verifyEncryptedCredentials(ConnectionDetails details) {
         if(details instanceof EncryptedCredentials encryptedCredentials) {
-            encryptedCredentials.encryptCredentials();
+            encryptedCredentials.encryptCredentials(encryptionService);
             log.debug("Encrypted credentials for connection details: {}", details.id);
         }
     }

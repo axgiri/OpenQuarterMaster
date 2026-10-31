@@ -2,11 +2,13 @@ package tech.ebp.oqm.plugin.alertMessenger.alerts.senders;
 
 import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import tech.ebp.oqm.lib.core.api.quarkus.runtime.messaging.EventNotificationWrapper;
 import tech.ebp.oqm.plugin.alertMessenger.WebhookClient;
 import tech.ebp.oqm.plugin.alertMessenger.alerts.AlertSender;
 import tech.ebp.oqm.plugin.alertMessenger.connections.SlackConnection;
+import tech.ebp.oqm.plugin.alertMessenger.connections.encryption.EncryptionService;
 import tech.ebp.oqm.plugin.alertMessenger.throttle.EventMetrics;
 import tech.ebp.oqm.plugin.alertMessenger.utils.MessageChannel;
 import tech.ebp.oqm.plugin.alertMessenger.utils.webhooks.slack.SlackWebhookMessage;
@@ -22,6 +24,9 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 @Slf4j
 public class SlackAlertSender implements AlertSender<SlackConnection> {
+    @Inject
+    EncryptionService encryptionService;
+
 
     @Override
     public MessageChannel messageChannel() {
@@ -57,7 +62,7 @@ public class SlackAlertSender implements AlertSender<SlackConnection> {
     }
 
     private String getDecryptedWebhookUrl(SlackConnection connection) {
-        connection.decryptCredentials();
+        connection.decryptCredentials(encryptionService);
         return connection.getWebhookUrl();
     }
 }

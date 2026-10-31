@@ -2,12 +2,14 @@ package tech.ebp.oqm.plugin.alertMessenger.alerts.senders;
 
 import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import tech.ebp.oqm.lib.core.api.quarkus.runtime.messaging.EventNotificationWrapper;
 import tech.ebp.oqm.plugin.alertMessenger.WebhookClient;
 import tech.ebp.oqm.plugin.alertMessenger.alerts.AlertSender;
 import tech.ebp.oqm.plugin.alertMessenger.connections.DiscordConnection;
+import tech.ebp.oqm.plugin.alertMessenger.connections.encryption.EncryptionService;
 import tech.ebp.oqm.plugin.alertMessenger.throttle.EventMetrics;
 import tech.ebp.oqm.plugin.alertMessenger.utils.MessageChannel;
 import tech.ebp.oqm.plugin.alertMessenger.utils.webhooks.discord.DiscordEmbed;
@@ -25,6 +27,9 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 @Slf4j
 public class DiscordAlertSender implements AlertSender<DiscordConnection> {
+    @Inject
+    EncryptionService encryptionService;
+
     private static final int DISCORD_FIELD_LIMIT = 1_000;
     private static final String TRUNCATION_SUFFIX = "\n...[truncated]";
 
@@ -135,7 +140,7 @@ public class DiscordAlertSender implements AlertSender<DiscordConnection> {
     }
 
     private String getDecryptedWebhookUrl(DiscordConnection connection) {
-        connection.decryptCredentials();
+        connection.decryptCredentials(encryptionService);
         return connection.getWebhookUrl();
     }
 }
