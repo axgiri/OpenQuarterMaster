@@ -14,6 +14,7 @@ import {ItemStoredSearchSelect} from "./ItemStoredSearchSelect.js";
 import {FileAttachmentSearchSelect} from "../media/fileAttachment/FileAttachmentSearchSelect.js";
 import {ItemCheckoutView} from "../itemCheckout/ItemCheckoutView.js";
 import {PageUtility} from "../../utilClasses/PageUtility.js";
+import {TimeUtils} from "../../TimeUtils.js";
 
 export class ItemStoredTransaction extends PageUtility {
 
@@ -326,7 +327,7 @@ export class ItemStoredTransaction extends PageUtility {
 			//determine "to" value
 			if (this.toStoredRadio.is(":checked")) {
 				console.debug("Going to stored.");
-				data.toStored = "";//TODO:: when we have the input implemented
+				data.toStored = this.toStoredInput.val();
 			}
 			if (this.toBlockRadio.is(":checked")) {
 				console.debug("Going to block.");
@@ -1053,7 +1054,7 @@ export class ItemStoredTransaction extends PageUtility {
 			let transaction = {
 				checkoutDetails: {
 					checkedOutFor: {},
-					dueBack: ItemStoredTransaction.Checkout.dueBackInput.val(),
+					dueBack: TimeUtils.getTsFromInput(ItemStoredTransaction.Checkout.dueBackInput),
 					reason: ItemStoredTransaction.Checkout.reasonInput.val(),
 					notes: ItemStoredTransaction.Checkout.detailsInput.val()
 				}

@@ -1,11 +1,11 @@
 plugins {
 	id 'java'
 	id 'io.quarkus'
-	id "io.freefair.lombok" version "9.5.0"
+	id "io.freefair.lombok" version "9.8.2"
 }
 
 group = 'tech.ebp.oqm.plugin'
-version = '1.0.2'
+version = '1.0.3'
 
 repositories {
 	mavenCentral()
@@ -30,7 +30,7 @@ dependencies {
 
 	implementation 'org.webjars:jquery:4.0.0'
 
-	implementation 'tech.epic-breakfast-productions.openquartermaster.lib.core:core-api-lib-quarkus:4.4.8'
+	implementation 'tech.epic-breakfast-productions.openquartermaster.lib.core:core-api-lib-quarkus:6.6.0'
 
 	testImplementation 'io.quarkus:quarkus-junit5'
 	testImplementation 'io.rest-assured:rest-assured'

@@ -11,6 +11,8 @@ import tech.ebp.oqm.core.api.model.validation.annotations.ValidInteractingEntity
 
 /**
  * An identifier for an interacting entity.
+ *
+ * @requirement OQMCA-3.5.2
  */
 @Data
 @Setter
@@ -18,15 +20,15 @@ import tech.ebp.oqm.core.api.model.validation.annotations.ValidInteractingEntity
 @NoArgsConstructor
 @ValidInteractingEntityReference
 public class InteractingEntityReference {
-	
+
 	private ObjectId id;
-	
+
 	private String name;
-	
+
 	@NotNull
 	@NonNull
 	private InteractingEntityType type;
-	
+
 	public InteractingEntityReference(InteractingEntity entity) {
 		this(entity.getId(), entity.getName(), entity.getType());
 	}

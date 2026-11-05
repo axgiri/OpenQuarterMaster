@@ -6,11 +6,10 @@ charset = utf-8
 end_of_line = lf
 indent_size = 4
 indent_style = tab
-insert_final_newline = true
+insert_final_newline = false
 trim_trailing_whitespace = true
-
-[*.java]
 max_line_length = 240
 
-[*.py]
-max_line_length = 240
+[*.md]
+trim_trailing_whitespace = false
+
