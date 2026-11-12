@@ -7,7 +7,7 @@
 <div class="row">
     <div class="col d-grid gap-2">
         <button type="button" id="mainAddButton" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addEditItemModal"
-                onclick="ItemAddEdit.setupAddEditForAdd();">{#icons/add}{/icons/add} Add Item
+                onclick="ItemAddEdit.setupAddEditForAdd();">{#icons/add /} Add Item
         </button>
     </div>
     <div class="col d-grid gap-2">
@@ -84,7 +84,6 @@
 	{#itemStored/itemStoredViewModal rootPrefix=rootPrefix /}
 	{#itemStored/itemStoredEditModal rootPrefix=rootPrefix /}
 	{#itemStored/transaction/allTransactionModals /}
-	{#CodeScannerModal /}
 	{#fileAttachment/FileAttachmentSearchSelectModal otherModalId="addEditItemModal" /}
 	{#fileAttachment/FileAttachmentViewModal otherModalId='itemViewModal' /}
 	{#object/idGenerator/searchSelectModal rootPrefix=rootPrefix /}
@@ -121,9 +120,8 @@
 	import { StoredView } from '{rootPrefix}/res/js/obj/itemStored/StoredView.js';
 	import { ItemCheckoutSearchSelect } from '{rootPrefix}/res/js/obj/itemCheckout/ItemCheckoutSearchSelect.js';
 	import { ExtItemSearch } from '{rootPrefix}/res/js/item/ExtItemSearch.js';
-	import { CodeScanner } from '{rootPrefix}/res/js/CodeScanner.js';
 	import { ItemCategoryInput } from '{rootPrefix}/res/js/obj/itemCategory/ItemCategoryInput.js';
-	
+
 	SearchUtils.init();
 	ItemAddEdit.init();
 	ItemView.init();
@@ -141,11 +139,10 @@
 	ItemStoredTransaction.init();
 	ItemStoredSearchSelect.init();
 	ExtItemSearch.init();
-	CodeScanner.init();
 	ItemCategoryInput.init();
 	HistorySearchUtils.init();
-	
-	console.log("Page modules loaded.");
+
+	Main.pageModulesLoaded();
 </script>
 <script defer>
 
@@ -154,13 +151,13 @@ let addItemFromFileFormMessages = $("#addItemFromFileFormMessages");
 
 $("#addItemFromFileForm").submit(function (e){
     e.preventDefault();
-    
+
     let formData = new FormData();
     let file = addFromFileInput.files[0];
-    
+
     formData.append("fileName", file.name);
     formData.append("file", file);
-    
+
     Rest.call({
         url: Rest.passRoot + '/inventory/item',
         method: "post",
@@ -178,7 +175,7 @@ function removeItem(itemId){
         return;
     }
     console.log("Removing item " + itemId);
-    
+
     Rest.call({
         url: Rest.passRoot + "/inventory/item/" + itemId,
         method: "DELETE",
