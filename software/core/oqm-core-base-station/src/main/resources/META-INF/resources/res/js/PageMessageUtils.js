@@ -19,7 +19,7 @@ export class PageMessageUtils extends PageUtility {
 			'</div>');
 		output.attr("id", id);
 
-		let headingObj = $('<h4 class="alert-heading"></h4>');
+		let headingObj = $('<p class="alert-heading h4"></p>');
 		let infoContentObj = "";
 
 		if (infoContent != null) {
@@ -105,7 +105,6 @@ export class PageMessageUtils extends PageUtility {
 			console.log("No page message.");
 		}
 		console.log("Done processing page messages.");
-		Main.processStop();
 
 		console.log(this.name + " done initializing.");
 	}

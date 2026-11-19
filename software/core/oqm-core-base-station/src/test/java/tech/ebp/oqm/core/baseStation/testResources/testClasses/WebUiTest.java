@@ -1,50 +1,82 @@
 package tech.ebp.oqm.core.baseStation.testResources.testClasses;
 
+import com.deque.html.axecore.playwright.AxeBuilder;
+import com.deque.html.axecore.results.AxeResults;
+import com.deque.html.axecore.results.Rule;
 import com.microsoft.playwright.options.HarMode;
 import com.microsoft.playwright.options.RecordVideoSize;
 import com.microsoft.playwright.options.ScreenSize;
 import com.microsoft.playwright.options.ViewportSize;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import tech.ebp.oqm.core.baseStation.testResources.testUsers.TestUser;
 import tech.ebp.oqm.core.baseStation.testResources.testUsers.TestUserService;
+import tech.ebp.oqm.core.baseStation.testResources.ui.PlaywrightOptions;
 import tech.ebp.oqm.core.baseStation.testResources.ui.PlaywrightSetup;
 import com.microsoft.playwright.*;
 import io.quarkus.test.common.http.TestHTTPResource;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
+import tech.ebp.oqm.core.baseStation.testResources.ui.assertions.AccessibilityUtilities;
 import tech.ebp.oqm.core.baseStation.testResources.ui.utilities.NavUtils;
 import tech.ebp.oqm.core.baseStation.testResources.ui.utilities.StorageBlockUiUtils;
+import tech.ebp.oqm.core.baseStation.utils.ObjectUtils;
 
 import javax.swing.text.View;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @Tag("ui")
+@ParameterizedClass
+@MethodSource("tech.ebp.oqm.core.baseStation.testResources.ui.PlaywrightSetup#getBrowserOps")
 public abstract class WebUiTest extends RunningServerTest {
 
-	private static Path getCurTestDir(TestInfo testInfo) {
+	private static String sanitizeString(String str){
+		return str.replaceAll("\"", "'")
+				   .replaceAll(":", "-")
+				   .replaceAll("\\|", " ")
+				   .replaceAll("\\*", "")
+				   .replaceAll("\\?", "");
+	}
+
+	private Path getCurTestDir(TestInfo testInfo) {
+
 		log.debug("Display name: {}", testInfo.getDisplayName());
 
 		Path output = PlaywrightSetup.RECORDINGS_DIR.resolve(testInfo.getTestClass().get().getName());
 
 		if (testInfo.getDisplayName().startsWith("[")) {
-			return output.resolve(testInfo.getTestMethod().get().getName())
-				.resolve(testInfo.getDisplayName().replaceAll("/", ""));
+			output = output.resolve(sanitizeString(testInfo.getTestMethod().get().getName()))
+				.resolve(sanitizeString(testInfo.getDisplayName().replaceAll("/", "")));
 		} else {
-			return output.resolve(testInfo.getDisplayName().replaceAll("\\(\\)", ""));
+			output = output.resolve(sanitizeString(testInfo.getDisplayName().replaceAll("\\(\\)", "")));
 		}
+
+		output = output.resolve(sanitizeString(playwrightOptions.toString()));
+
+		log.info("Addendum test results dir: {}", output);
+		return output;
 	}
 
 	protected static Page.ScreenshotOptions getScreenshotOptions() {
 		return new Page.ScreenshotOptions().setFullPage(true);
 	}
+
+	@Getter
+	@Parameter
+	PlaywrightOptions playwrightOptions;
 
 	@Getter
 	private BrowserContext context;
@@ -54,27 +86,24 @@ public abstract class WebUiTest extends RunningServerTest {
 
 	Map<Integer, OutputStream> consoleOutputs = new HashMap<>();
 
+	@Getter
+	List<Rule> accessibilityViolations = new ArrayList<>();
+
 	@BeforeEach
 	public void beforeEachUi(TestInfo testInfo) {
 		StorageBlockUiUtils.resetBlockNames();
 		this.curTestUiResultDir = getCurTestDir(testInfo);
-		ScreenSize screenSize = new ScreenSize(1920, 1080);
 
-		Browser.NewContextOptions newContextOptions = new Browser.NewContextOptions()
-			.setRecordVideoDir(this.curTestUiResultDir)
-			.setRecordHarPath(this.curTestUiResultDir.resolve("har.json"))
-			.setScreenSize(screenSize)
-			.setRecordVideoSize(new RecordVideoSize(screenSize.width, screenSize.height))
-			.setViewportSize(new ViewportSize(screenSize.width, screenSize.height));
-
-		this.context = PlaywrightSetup.getInstance().getBrowser().newContext(newContextOptions);
+		this.context = PlaywrightSetup.getInstance().getBrowser().newContext(this.playwrightOptions.newContextOptions(this.curTestUiResultDir));
 	}
 
 	@AfterEach
 	public void afterEachUi(TestInfo testInfo) throws InterruptedException, IOException {
+		log.info("Saving off browser related info.");
 
 		for (int i = 0; i < this.getContext().pages().size(); i++) {
 			Page curPage = this.getContext().pages().get(i);
+			this.scanAccessibility(curPage);
 			Path curPageFinalScreenshot = this.curTestUiResultDir.resolve("page-" + (i + 1) + "-final.png");
 			Path curPageHtmlFile = this.curTestUiResultDir.resolve("page-" + (i + 1) + "-final-code.html");
 			Path curPageInfoFile = this.curTestUiResultDir.resolve("page-" + (i + 1) + "-final-info.txt");
@@ -93,11 +122,24 @@ public abstract class WebUiTest extends RunningServerTest {
 				pw.println();
 			}
 		}
-		Thread.sleep(250);
+		Thread.sleep(100);//sleep to make sure resulting recording has pause to look at end state
 		for (OutputStream outputStream : this.consoleOutputs.values()) {
 			outputStream.close();
 		}
+
+		log.info("Saving off accessibility violations.");
+		{
+			Path accessibilityViolationsFile = this.curTestUiResultDir.resolve("accessibilityViolations.json");
+
+			ObjectUtils.OBJECT_MAPPER.writeValue(
+				accessibilityViolationsFile.toFile(),
+				this.getAccessibilityViolations()
+			);
+
+		}
 		this.context.close();
+
+		assertTrue(this.getAccessibilityViolations().isEmpty(), "Tests found " + this.getAccessibilityViolations().size() + " accessibility violations.");
 	}
 
 	protected Page getPage() {
@@ -137,8 +179,8 @@ public abstract class WebUiTest extends RunningServerTest {
 					}
 					try {
 						message.append(curHandle.jsonValue().toString().strip()).append("\n");
-					} catch(PlaywrightException | NullPointerException e){
-						log.warn("Failed to get json value for handle: {}", curHandle, e);
+					} catch(Throwable e){
+						log.warn("Failed to get json value for handle: {} / {}", curHandle, e.getMessage());
 						break;
 					}
 				}
@@ -206,5 +248,15 @@ public abstract class WebUiTest extends RunningServerTest {
 		}
 
 		return output;
+	}
+
+	protected void scanAccessibility(Page page){
+		AxeResults results = AccessibilityUtilities.getAxeBuilder(page).analyze();
+
+		List<Rule> violations = results.getViolations();
+
+		log.info("Found {} new accessibility violations.", violations);
+
+		this.getAccessibilityViolations().addAll(violations);
 	}
 }
